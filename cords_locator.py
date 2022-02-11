@@ -41,7 +41,7 @@ def main(source: str, year: int) -> list:
     
     with open('dump_films.csv', mode='w') as file:
         # Uncomment if you don't have dump_films.csv file, also change open mode to w
-        file.write('Name,Year,Location,Coordinates\n')
+        file.write('Name","Year","Location","Coordinates\n')
         file.writelines(films_cords)
     
     return films_cords
