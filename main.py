@@ -44,6 +44,26 @@ def locations_year_filter(source: str, year: int) -> None:
     return searched_films
 
 
+def map_creator(lat, lng, year) -> None:
+    html = '''<h4>Churches information:</h4>
+Name: {},<br>
+IMDb page: {}
+'''
+
+    map = folium.Map(location = [lat, lng], zoom_start=10)
+
+    group = folium.FeatureGroup(name=f'{year} films')
+
+    group.add_child(folium.Marker(location=[40.7306, -73.9352],
+                                popup="я тут!",
+                                icon=folium.Icon()))
+    
+    map.add_child(group)
+    map.add_child(folium.LayerControl())
+
+    map.save('Map_1.html')
+
+
 if __name__ == '__main__':
     c = [40.7306, -73.9352]
     year = input()
