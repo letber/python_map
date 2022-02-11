@@ -26,11 +26,29 @@ def create_parser() -> object:
     return parser
 
 
+def locations_year_filter(source: str, year: int) -> None:
+    with open(source, 'rb') as file:
+        lines = file.readlines()[14:]
+    
+    searched_films = []
+
+    for index, line in enumerate(lines):
+        new_line = str(line, 'ISO-8859-1').split('\t')
+        if new_line[0].find(f'({year})') != -1:
+            new_line[-1] = new_line[-1].rstrip('\n')
+            year_space = new_line[0].rfind(' ')
+            new_line.insert(1, new_line[0][year_space + 2:-1])
+            new_line[0] = new_line[0][:year_space]
+            searched_films.append(new_line)
+
+    return searched_films
+
+
 if __name__ == '__main__':
     c = [40.7306, -73.9352]
     year = input()
-    # l = locations_year_filter('locations_6.list', year)
-    # print(l, len(l))
+    l = locations_year_filter('locations_6.list', year)
+    print(l, len(l))
 
     # pars = create_parser()
     # args = pars.parse_args()
