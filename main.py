@@ -1,5 +1,5 @@
-"""Module that works with data about films, given in file locations.list,\
-
+"""Module that works with data about films, given in file locations.list, \
+creates webmap with closest films to you.
     """
 import argparse
 import folium
@@ -7,6 +7,7 @@ import pandas
 import geopy
 import csv
 from math import sin, cos, asin, sqrt, pi
+import cords_locator
 
 
 def create_parser() -> object:
@@ -64,40 +65,39 @@ def find_closest_films(dataset: str, year: str, cord: tuple) -> list:
     data = all_data.loc[all_data['Year'] == year]
     films = data['Name']
     cords = data['Coordinates']
+    indexs = data.index
 
     my_lat = cord[0]
     my_lng = cord[1]
     closest_locations = [(100000000, 1) for i in range(5)]
-    for index, cord in enumerate(cords):
+    for index, cord in zip(indexs, cords):
         if cord == 'None"' or cord == 'location is undefined"':
             continue
         else:
-            # print(type(cord))
             lat = float(cord[1:cord.find(',')])
             lng = float(cord[1 + cord.find(','): -2])
             dist = find_distance_on_sphere(my_lat, my_lng, lat, lng)
-            # print(dist, pi)
+
             closest_locations.append((dist, index))
             closest_locations.sort(key=lambda x: x[0])
             closest_locations.pop(-1)
 
     closest_films = [
         (closest_locations[i][0], films[closest_locations[i][1]], cords[closest_locations[i][1]]) for i in range(5)]
-    
-    
+
     return closest_films
 
 
 def map_creator(lat, lng, year, films) -> None:
     html = '''<h4>Film info:</h4>
 Name: {},<br>
-IMDb page: {}
+<a href=https://www.imdb.com/find?q={}>IMDb page</a>
 '''
-    map = folium.Map(location=[lat, lng], zoom_start=10)
+    map = folium.Map(location=[lat, lng], zoom_start=8)
 
     map.add_child(folium.Marker(location=[lat, lng],
-                                    popup="я тут!",
-                                    icon=folium.Icon()))
+                                popup="я тут!",
+                                icon=folium.Icon()))
 
     group = folium.FeatureGroup(name=f'{year} films')
 
@@ -105,12 +105,12 @@ IMDb page: {}
         cord = film[2]
         lat = float(cord[1:cord.find(',')])
         lng = float(cord[1 + cord.find(','): -2])
-        iframe = folium.IFrame(html=html.format(film[1], ''),
-                                width=300,
-                                height=100)
+        iframe = folium.IFrame(html=html.format(film[1][1:], '+'.join(film[1][1:].split())),
+                               width=300,
+                               height=100)
         group.add_child(folium.Marker(location=[lat, lng],
-                    popup=folium.Popup(iframe),
-                    icon=folium.Icon(color = "green")))
+                                      popup=folium.Popup(iframe),
+                                      icon=folium.Icon(color="green")))
 
     map.add_child(group)
     map.add_child(folium.LayerControl())
@@ -118,18 +118,15 @@ IMDb page: {}
     map.save('Map_1.html')
 
 
+def main_func(year: int, latitude: float, longtitude: float, dst: str) -> None:
+    cords_locator.main(dst, year)
+    films = find_closest_films(
+        'dump_films.csv', str(year), (latitude, longtitude))
+    map_creator(latitude, longtitude, year, films)
+
+
 if __name__ == '__main__':
-    co = (40.7306, -73.9352)
-    year = input('Please, write the year: ')
+    pars = create_parser()
+    args = pars.parse_args()
 
-    films = find_closest_films('films.csv', str(year), co)
-    # print(films)
-    map_creator(co[0], co[1], year, films)
-
-
-    # l = locations_year_filter('locations_24.list', year)
-    # print(l, len(l))
-
-    # pars = create_parser()
-    # args = pars.parse_args()
-
+    main_func(args.year, args.latitude, args.longtitude, args.dst)
